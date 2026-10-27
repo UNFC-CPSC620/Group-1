@@ -60,8 +60,10 @@ def _prepare_neighbourhood_data(df, columns):
     """
     Prepare and validate neighbourhood data.
 
-    Removes missing neighbourhood labels and standardizes
-    NYC neighbourhood group names regardless of case.
+    Removes missing or empty neighbourhood labels.
+    Standardizes NYC neighbourhood group names.
+    Normalizes neighbourhood names regardless of case,
+    preserving the most frequent spelling.
 
     Parameters
     ----------
@@ -73,7 +75,8 @@ def _prepare_neighbourhood_data(df, columns):
     Returns
     -------
     pandas.DataFrame
-        Cleaned dataset with standardized group names.
+        Cleaned dataset with standardized group and
+        neighbourhood names.
     """
     cleaned = clean_price_data(df)
 
@@ -124,6 +127,30 @@ def _prepare_neighbourhood_data(df, columns):
             standardized.fillna(
                 cleaned["neighbourhood_group"]
             )
+        )
+
+    # Normalize neighbourhood names (case insensitive).
+    # Keep the most frequently used spelling.
+    # For example: "Tribeca" and "tribeca" become "Tribeca".
+    if "neighbourhood" in columns:
+
+        name_counts = (
+            cleaned["neighbourhood"]
+            .value_counts()
+        )
+
+        canonical_names = {}
+
+        for name in name_counts.index:
+            normalized_name = name.casefold()
+
+            if normalized_name not in canonical_names:
+                canonical_names[normalized_name] = name
+
+        cleaned["neighbourhood"] = (
+            cleaned["neighbourhood"]
+            .str.casefold()
+            .map(canonical_names)
         )
 
     return cleaned
@@ -179,6 +206,10 @@ def average_prices_by_neighbourhood(df):
     """
     Calculate average prices for individual neighbourhoods.
 
+    Neighbourhood names are normalized so that spelling
+    differences in capitalization do not create
+    duplicate neighbourhood groups.
+
     Parameters
     ----------
     df : pandas.DataFrame
@@ -230,6 +261,9 @@ def average_prices_by_neighbourhood(df):
 def top_neighbourhoods_by_listings(df, top_n=10):
     """
     Identify neighbourhoods with the most valid-price listings.
+
+    Neighbourhood names are normalized before counting
+    so capitalization differences do not split listings.
 
     Parameters
     ----------
