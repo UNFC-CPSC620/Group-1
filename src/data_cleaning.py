@@ -235,4 +235,3 @@ if __name__ == "__main__":
     print(cleaned_df.head().to_string(index=False))
 
     print("\nData cleaning completed successfully.")
-
