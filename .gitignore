@@ -1,0 +1,13 @@
+# Python temporary files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Testing cache
+.pytest_cache/
+
+# Local environment variables
+.env
