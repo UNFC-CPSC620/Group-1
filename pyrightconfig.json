@@ -1,0 +1,14 @@
+{
+    "include": [
+        "src",
+        "tests"
+    ],
+    "pythonVersion": "3.10",
+    "pythonPlatform": "Windows",
+    "venvPath": ".",
+    "executionEnvironments": [
+        {
+            "root": "."
+        }
+    ]
+}
