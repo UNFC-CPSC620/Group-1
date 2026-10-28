@@ -1,10 +1,10 @@
-﻿# TASK-11 â€” Neighbourhood Analysis Testing Report
+# TASK-11 â€” Neighbourhood Analysis Testing Report
 
-**Project:** NYC Airbnb Data Summary Tool  
-**Course:** CPSC620  
-**Issue:** #15  
-**Related user story:** US-03 (#12)  
-**Implementation pull requests:** #25 (price and neighbourhood analysis) and #26 (neighbourhood-group distribution)  
+**Project:** NYC Airbnb Data Summary Tool
+**Course:** CPSC620
+**Issue:** #15
+**Related user story:** US-03 (#12)
+**Implementation pull requests:** #25 (price and neighbourhood analysis) and #26 (neighbourhood-group distribution)
 **Verification date:** October 27, 2026
 
 ## Objective
@@ -130,4 +130,3 @@ At verification time, PRs #25 and #26 were not merged into `main`. Run the same 
 ## Conclusion
 
 All 16 unit tests passed against the combined neighbourhood-analysis feature files. The report distinguishes fixture-based unit-test results from the full-dataset sample summaries and provides PowerShell commands separately from the Markdown content.
-
