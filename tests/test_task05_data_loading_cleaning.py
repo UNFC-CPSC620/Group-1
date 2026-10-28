@@ -785,14 +785,14 @@ class TestDocumentation(unittest.TestCase):
         clean_data()'s docstring must mention 'Parameters' so callers
         know what to pass in.
         """
-        self.assertIn("Parameters", clean_data.__doc__)
+        self.assertIn("Parameters", clean_data.__doc__ or "")
 
     def test_clean_data_docstring_mentions_returns(self):
         """
         clean_data()'s docstring must mention 'Returns' so callers
         know what to expect back.
         """
-        self.assertIn("Returns", clean_data.__doc__)
+        self.assertIn("Returns", clean_data.__doc__ or "")
 
 
 # =============================================================================
