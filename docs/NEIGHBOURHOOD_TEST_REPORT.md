@@ -1,55 +1,61 @@
-# TASK-11 — Neighbourhood Analysis Testing Report
+﻿# TASK-11 â€” Neighbourhood Analysis Testing Report
 
-**Project:** NYC Airbnb Data Summary Tool
+**Project:** NYC Airbnb Data Summary Tool  
+**Course:** CPSC620  
+**Issue:** #15  
+**Related user story:** US-03 (#12)  
+**Implementation pull requests:** #25 (price and neighbourhood analysis) and #26 (neighbourhood-group distribution)  
+**Verification date:** October 27, 2026
 
-**Course:** CPSC620
+## Objective
 
-**Issue:** #15
+Verify listing counts, percentage distributions, average prices, top-neighbourhood rankings, and handling of missing or invalid values. Record repeatable test instructions and representative results.
 
-**Related User Story:** US-03 (#12)
+## Test setup
 
-**Related Pull Requests:** #25 and #26
+The unit tests use small in-memory Pandas DataFrames so expected results are deterministic and do not depend on the full CSV file. The verification run used the implementation and test files from PRs #25 and #26 in a temporary worktree. Those PRs were open and unmerged at the time, so these results describe the combined feature-branch files; they do not claim that the current `main` branch contains those modules.
 
-**Test Date:** October 27, 2026
+The test files are:
 
-## 1. Objective
+- `tests/test_neighbourhood_analysis.py` â€” 8 tests for valid prices, averages, rankings, input validation, return types, and input immutability.
+- `tests/test_neighbourhood_group_analysis.py` â€” 7 tests for counts, percentages, missing labels, empty data, and input validation.
+- `tests/test_neighbourhood_normalization.py` â€” 1 regression test for case-insensitive neighbourhood names.
 
-Validate and document the neighbourhood analysis functions, including listing counts, percentage distributions, average prices, top neighbourhood rankings, missing and invalid value handling, and code reliability.
+## Run the tests in Windows PowerShell
 
-## 2. Testing Environment
+Run these commands in the terminal from the package root. Keep this Markdown report in `docs/NEIGHBOURHOOD_TEST_REPORT.md`; do not paste the report text or its headings and tables into PowerShell.
 
-- Language: Python
+```powershell
+Set-Location <path-to-task11-deliverable>
+py -m unittest discover -s tests -v
+```
 
-- Library: Pandas
+Or run the supplied script:
 
-- Testing framework: unittest
+```powershell
+./RUN_TESTS.ps1
+```
 
-- Dataset: `data/Airbnb_NYC.csv`
+## Automated test results
 
-- Total dataset records: 42,336
+The verification command `python -m unittest discover -s tests -v` completed successfully.
 
-- Testing performed in an isolated Git worktree using the implementation modules from PR #25 and PR #26.
-
-## 3. Automated Testing Results
-
-All 16 automated tests passed successfully.
-| Test Suite | Tests | Result |
+| Test suite | Tests | Result |
 |---|---:|---|
 | Neighbourhood price analysis | 8 | PASS |
-| Neighbourhood group analysis | 7 | PASS |
+| Neighbourhood-group analysis | 7 | PASS |
 | Neighbourhood name normalization | 1 | PASS |
 | **Total** | **16** | **PASS** |
 
-Execution command:
+Recorded output: `Ran 16 tests in 0.075s â€” OK`.
 
-`py -m unittest discover -s tests -v`
+## Dataset summary results
 
-Recorded result:
+The following full-dataset figures are the sample outputs recorded by the implementation pull requests. The isolated 16-test run above used deterministic fixtures and did not reload the 6.2 MB CSV.
 
-`Ran 16 tests in 0.073s — OK`
+### Listings by neighbourhood group
 
-## 4. Neighbourhood Group Distribution
-| Neighbourhood Group | Listing Count | Percentage |
+| Neighbourhood group | Listings | Percentage |
 |---|---:|---:|
 | Manhattan | 18,764 | 44.32% |
 | Brooklyn | 17,396 | 41.09% |
@@ -58,10 +64,11 @@ Recorded result:
 | Staten Island | 325 | 0.77% |
 | **Total** | **42,336** | **100.00%** |
 
-All listings were included in the neighbourhood group distribution.
+The group-count function includes records with a valid group label regardless of price. Missing or blank group labels are excluded from both the counts and percentage denominator.
 
-## 5. Average Prices by Neighbourhood Group
-| Neighbourhood Group | Average Price | Valid-Price Listings |
+### Average prices by neighbourhood group
+
+| Neighbourhood group | Average price | Valid-price listings |
 |---|---:|---:|
 | Manhattan | $198.60 | 18,669 |
 | Brooklyn | $124.62 | 17,309 |
@@ -69,10 +76,11 @@ All listings were included in the neighbourhood group distribution.
 | Queens | $100.73 | 4,876 |
 | Bronx | $87.91 | 941 |
 
-The price analysis retained 42,119 records with valid, positive, finite prices and excluded 217 records from price calculations.
+Price summaries exclude missing, nonnumeric, non-finite, zero, and negative prices. The implementation pull request recorded 42,119 valid-price rows and 217 excluded rows.
 
-## 6. Top 10 Neighbourhoods by Valid-Price Listings
-| Rank | Neighbourhood | Listing Count |
+### Top 10 neighbourhoods by valid-price listings
+
+| Rank | Neighbourhood | Listings |
 |---:|---|---:|
 | 1 | Williamsburg | 3,376 |
 | 2 | Bedford-Stuyvesant | 3,177 |
@@ -85,74 +93,41 @@ The price analysis retained 42,119 records with valid, positive, finite prices a
 | 9 | Crown Heights | 1,335 |
 | 10 | Midtown | 1,332 |
 
-These rankings use valid-price listings, rather than every raw listing.
+These rankings count rows with valid positive prices, matching the price-analysis function's documented policy.
 
-## 7. Missing and Invalid Value Handling
+## Missing and invalid values
 
-The automated tests cover:
+The unit tests verify that:
 
-- Missing required columns.
+- Missing required columns raise `ValueError`; non-DataFrame input raises `TypeError`.
+- Missing or blank group and neighbourhood names are excluded from group summaries.
+- Nonnumeric, missing, infinite, zero, and negative prices are excluded from price calculations.
+- Invalid `top_n` values raise `ValueError`.
+- Empty inputs return an empty DataFrame with the expected output columns.
+- Analysis leaves the caller's DataFrame unchanged.
 
-- Non-DataFrame inputs.
+## Regression finding
 
-- Missing or empty neighbourhood group values.
+Case variants such as `Tribeca` / `tribeca` and `Red Hook` / `red hook` must not be counted as separate neighbourhoods. The normalization regression test verifies merged counts and averages while retaining a canonical display spelling.
 
-- Invalid and non-positive prices.
+## Acceptance criteria
 
-- Invalid top-N ranking parameters.
-
-- Empty DataFrames.
-
-- Preservation of the original input DataFrame.
-
-All corresponding automated tests passed.
-
-## 8. Defect Identified and Corrected
-
-**Issue:** Neighbourhood names with different capitalization were treated as separate neighbourhoods.
-
-Examples identified in the dataset:
-
-- `Tribeca` and `tribeca`
-
-- `Red Hook` and `red hook`
-
-**Correction:** Implemented case-insensitive neighbourhood name normalization while preserving the most frequently occurring spelling.
-
-### Results After Correction
-| Neighbourhood | Valid-Price Listings | Average Price |
-|---|---:|---:|
-| Tribeca | 151 | $504.65 |
-| Red Hook | 70 | $144.93 |
-
-The normalization check passed.
-
-A dedicated regression test was implemented in `tests/test_neighbourhood_normalization.py` and published through PR #25.
-
-## 9. Acceptance Criteria Verification
-| Acceptance Criterion | Result |
+| Criterion | Result |
 |---|---|
 | Listing counts verified | PASS |
-| Percentage calculations accurate | PASS |
-| Average price calculations tested | PASS |
-| Top neighbourhood rankings tested | PASS |
+| Percentage calculations verified | PASS |
+| Average prices verified | PASS |
+| Top-neighbourhood ranking verified | PASS |
 | Missing and invalid values handled | PASS |
-| Expected DataFrame outputs verified | PASS |
-| Testing results documented | PASS |
-| Automated tests execute without errors | PASS |
+| Expected DataFrame results verified | PASS |
+| Results and repeatable PowerShell commands documented | PASS |
+| Automated tests execute without errors in the combined feature worktree | PASS |
 
-## 10. Integration and Review Notes
+## Integration note
 
-The 16-test run was performed in an isolated testing worktree containing the two modules under review and the regression correction.
+At verification time, PRs #25 and #26 were not merged into `main`. Run the same command again after those implementation and test changes are integrated to confirm the final combined repository state.
 
-At the time of testing, PR #25 and PR #26 were not yet merged into `main`. Therefore, this result documents successful testing of their combined working copies, not a completed integration into the main branch.
+## Conclusion
 
-The combined test suite should be rerun after both pull requests have been merged.
+All 16 unit tests passed against the combined neighbourhood-analysis feature files. The report distinguishes fixture-based unit-test results from the full-dataset sample summaries and provides PowerShell commands separately from the Markdown content.
 
-## 11. Conclusion
-
-The neighbourhood analysis implementations passed 16 automated tests and produced the documented results on the NYC Airbnb dataset.
-
-Testing also identified a capitalization-related data quality defect, which was corrected and covered by a regression test.
-
-The functions are ready for code review and final integration, subject to approval and merging of the related pull requests.
