@@ -1,4 +1,4 @@
-
+import numpy as np
 import pandas as pd
 
 
@@ -22,8 +22,10 @@ def calculate_price_summary(df):
 
     prices = pd.to_numeric(df["price"], errors="coerce")
 
-    # Exclude missing, non-numeric, and negative prices.
-    valid_prices = prices[prices.notna() & (prices >= 0)]
+    # Exclude missing, non-numeric, non-finite, and non-positive prices.
+    valid_prices = prices[
+        np.isfinite(prices) & (prices > 0)
+    ]
 
     if valid_prices.empty:
         raise ValueError("No valid prices available for analysis.")
@@ -35,3 +37,23 @@ def calculate_price_summary(df):
         "maximum_price": valid_prices.max(),
         "valid_price_count": int(valid_prices.count()),
     }
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    from data_loader import load_data
+
+    dataset_path = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "Airbnb_NYC.csv"
+    )
+
+    airbnb_df = load_data(dataset_path)
+    summary = calculate_price_summary(airbnb_df)
+
+    print("NYC Airbnb Price Summary")
+    print("-" * 40)
+
+    for metric, value in summary.items():
+        print(f"{metric}: {value}")
