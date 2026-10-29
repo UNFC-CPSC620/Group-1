@@ -23,6 +23,9 @@ def analyze_overall_availability(df):
     statistics for the `availability_365` column — the number of days per
     year a listing is available for booking.
 
+    Only values in the valid range [0, 365] are included in the
+    calculations. The original DataFrame is never modified.
+
     Key metrics computed
     --------------------
     - Mean and median availability (central tendency)
@@ -50,6 +53,12 @@ def analyze_overall_availability(df):
         - fully_available      : count of listings available all 365 days
         - not_available        : count of listings with 0 available days
 
+    Raises
+    ------
+    ValueError
+        If the `availability_365` column is missing, or if no valid values
+        remain after filtering out out-of-range and non-numeric entries.
+
     Examples
     --------
     >>> from src.data_loader import load_data
@@ -59,28 +68,44 @@ def analyze_overall_availability(df):
     112.78
     """
 
-    # Convert to numeric first — pandas may read this column as strings from CSV
-    # errors="coerce" turns any non-numeric value into NaN safely
-    df["availability_365"] = pd.to_numeric(df["availability_365"], errors="coerce")
+    if "availability_365" not in df.columns:
+        raise ValueError("The dataset must contain an 'availability_365' column.")
 
-    # Drop NaN values before computing stats to avoid skewed results
-    availability = df["availability_365"].dropna()
+    # Work on a copy so the caller's DataFrame is never modified
+    data = df.copy()
+
+    # Convert to numeric — errors="coerce" turns non-numeric values into NaN
+    data["availability_365"] = pd.to_numeric(
+        data["availability_365"], errors="coerce"
+    )
+
+    # Filter to valid range [0, 365] only — removes NaN and out-of-range values
+    # such as 999, which indicate data quality issues
+    availability = data["availability_365"][
+        (data["availability_365"] >= 0) & (data["availability_365"] <= 365)
+    ]
+
+    if availability.empty:
+        raise ValueError(
+            "No valid availability_365 values found in the dataset."
+        )
 
     # ------------------------------------------------------------------
     # Build the summary dictionary
     # Each value is rounded or cast to keep output clean and readable
     # ------------------------------------------------------------------
     summary = {
-        "total_listings"    : len(df),
-        "mean_availability" : round(availability.mean(), 2),
-        "median_availability": round(availability.median(), 2),
-        "min_availability"  : int(availability.min()),
-        "max_availability"  : int(availability.max()),
-        "std_availability"  : round(availability.std(), 2),
+        # total_listings counts all rows in the original dataset
+        "total_listings"     : len(df),
+        "mean_availability"  : round(float(availability.mean()), 2),
+        "median_availability": round(float(availability.median()), 2),
+        "min_availability"   : int(availability.min()),
+        "max_availability"   : int(availability.max()),
+        "std_availability"   : round(float(availability.std()), 2),
         # Count listings that are open every single day of the year
-        "fully_available"   : int((availability == 365).sum()),
+        "fully_available"    : int((availability == 365).sum()),
         # Count listings that are never available (blocked or inactive)
-        "not_available"     : int((availability == 0).sum()),
+        "not_available"      : int((availability == 0).sum()),
     }
 
     # ------------------------------------------------------------------
