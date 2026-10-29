@@ -308,7 +308,7 @@ class TestCompareAvailabilityGrouping(unittest.TestCase):
 
     def test_brooklyn_mean_availability(self):
         brooklyn = self.result[self.result["neighbourhood_group"] == "Brooklyn"]
-        self.assertAlmostEqual(brooklyn["mean_availability"].values[0], 200.0, places=1)
+        self.assertAlmostEqual(brooklyn["mean_availability"].iloc[0].item(), 200.0, places=1)
 
     def test_manhattan_total_listings(self):
         manhattan = self.result[self.result["neighbourhood_group"] == "Manhattan"]
@@ -316,7 +316,7 @@ class TestCompareAvailabilityGrouping(unittest.TestCase):
 
     def test_manhattan_mean_availability(self):
         manhattan = self.result[self.result["neighbourhood_group"] == "Manhattan"]
-        self.assertAlmostEqual(manhattan["mean_availability"].values[0], 50.0, places=1)
+        self.assertAlmostEqual(manhattan["mean_availability"].iloc[0].item(), 50.0, places=1)
 
 
 class TestCompareAvailabilitySorting(unittest.TestCase):
@@ -364,6 +364,126 @@ class TestCompareAvailabilityTextNormalisation(unittest.TestCase):
         result = compare_availability_by_neighbourhood(df)
         self.assertEqual(len(result), 1)
         self.assertEqual(result.iloc[0]["neighbourhood_group"], "Brooklyn")
+
+
+# =============================================================================
+# 2b. Regression tests — Katerine's review (PR #38 / #39 comments)
+# =============================================================================
+
+class TestAnalyzeOverallAvailabilityInvalidValues(unittest.TestCase):
+    """Values outside [0, 365] must be excluded from statistics."""
+
+    def test_value_above_365_is_excluded_from_stats(self):
+        """A value of 999 must not affect mean/max — it gets filtered out."""
+        df = _make_df(
+            _make_row(id=1, availability_365=100),
+            _make_row(id=2, availability_365=200),
+            _make_row(id=3, availability_365=999),   # invalid — must be ignored
+        )
+        result = analyze_overall_availability(df)
+        # mean of valid values (100, 200) = 150.0, NOT (100+200+999)/3 = 433.0
+        self.assertAlmostEqual(result["mean_availability"], 150.0, places=1)
+
+    def test_value_above_365_does_not_raise_max(self):
+        """max_availability must never exceed 365."""
+        df = _make_df(
+            _make_row(id=1, availability_365=300),
+            _make_row(id=2, availability_365=999),   # invalid — must be ignored
+        )
+        result = analyze_overall_availability(df)
+        self.assertLessEqual(result["max_availability"], 365)
+
+    def test_negative_value_is_excluded(self):
+        """Negative availability values are invalid and must be filtered out."""
+        df = _make_df(
+            _make_row(id=1, availability_365=100),
+            _make_row(id=2, availability_365=-5),    # invalid — must be ignored
+        )
+        result = analyze_overall_availability(df)
+        self.assertAlmostEqual(result["mean_availability"], 100.0, places=1)
+        self.assertGreaterEqual(result["min_availability"], 0)
+
+    def test_all_invalid_raises_value_error(self):
+        """If every row has an out-of-range value a ValueError must be raised."""
+        df = _make_df(
+            _make_row(id=1, availability_365=999),
+            _make_row(id=2, availability_365=-1),
+        )
+        with self.assertRaises(ValueError):
+            analyze_overall_availability(df)
+
+    def test_boundary_value_365_is_included(self):
+        """Exactly 365 is a valid value and must be counted in statistics."""
+        df = _make_df(_make_row(id=1, availability_365=365))
+        result = analyze_overall_availability(df)
+        self.assertEqual(result["fully_available"], 1)
+        self.assertEqual(result["max_availability"], 365)
+
+    def test_boundary_value_0_is_included(self):
+        """Exactly 0 is a valid value (listing blocked all year)."""
+        df = _make_df(_make_row(id=1, availability_365=0))
+        result = analyze_overall_availability(df)
+        self.assertEqual(result["not_available"], 1)
+        self.assertEqual(result["min_availability"], 0)
+
+
+class TestCompareAvailabilityInvalidValues(unittest.TestCase):
+    """Values outside [0, 365] must be excluded from neighbourhood stats."""
+
+    def test_value_above_365_excluded_from_mean(self):
+        """A listing with availability 999 must not inflate the borough mean."""
+        df = _make_df(
+            _make_row(id=1, neighbourhood_group="Brooklyn", availability_365=100),
+            _make_row(id=2, neighbourhood_group="Brooklyn", availability_365=999),  # invalid
+        )
+        result = compare_availability_by_neighbourhood(df)
+        brooklyn = result[result["neighbourhood_group"] == "Brooklyn"]
+        # Only the valid row (100) should count toward the mean
+        self.assertAlmostEqual(brooklyn["mean_availability"].iloc[0].item(), 100.0, places=1)
+
+    def test_total_listings_counts_all_rows_including_invalid(self):
+        """total_listings is the number of rows in the group (size), not just
+        the count with valid availability (count). A listing with availability
+        999 is still a listing — it just has no valid availability value."""
+        df = _make_df(
+            _make_row(id=1, neighbourhood_group="Brooklyn", availability_365=100),
+            _make_row(id=2, neighbourhood_group="Brooklyn", availability_365=999),  # invalid
+        )
+        result = compare_availability_by_neighbourhood(df)
+        brooklyn = result[result["neighbourhood_group"] == "Brooklyn"]
+        # Both rows belong to Brooklyn — total_listings must be 2
+        self.assertEqual(brooklyn["total_listings"].values[0], 2)
+
+
+class TestDataFrameImmutability(unittest.TestCase):
+    """Neither function may modify the caller's DataFrame."""
+
+    def test_analyze_overall_does_not_modify_original(self):
+        """The original DataFrame must be unchanged after the call."""
+        df_original = _make_df(
+            _make_row(id=1, availability_365=100),
+            _make_row(id=2, availability_365=200),
+        )
+        original_values = df_original["availability_365"].tolist()
+        original_shape  = df_original.shape
+
+        analyze_overall_availability(df_original)
+
+        self.assertEqual(df_original["availability_365"].tolist(), original_values)
+        self.assertEqual(df_original.shape, original_shape)
+
+    def test_compare_neighbourhood_does_not_modify_original(self):
+        """The original DataFrame must be unchanged after the call."""
+        df_original = _make_df(
+            _make_row(id=1, neighbourhood_group="brooklyn",  availability_365=100),
+            _make_row(id=2, neighbourhood_group="BROOKLYN",  availability_365=200),
+        )
+        original_groups = df_original["neighbourhood_group"].tolist()
+
+        compare_availability_by_neighbourhood(df_original)
+
+        # neighbourhood_group column must still have the raw (un-normalised) values
+        self.assertEqual(df_original["neighbourhood_group"].tolist(), original_groups)
 
 
 # =============================================================================
