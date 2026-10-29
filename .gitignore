@@ -32,3 +32,6 @@ Thumbs.db
 
 # Data files (large CSV not tracked in git)
 data/*.csv
+
+# Local environment variables
+.env
