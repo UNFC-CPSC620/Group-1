@@ -1,4 +1,3 @@
-
 import pandas as pd
 
 
@@ -50,13 +49,14 @@ def analyze_prices_by_room_type(df):
         .str.lower()
     )
 
-    # Remove empty room types and negative prices.
+    # Remove empty room types and non-positive prices.
     data = data[data["room_type"] != ""]
-    data = data[data["price"] >= 0]
+    data = data[data["price"] > 0]
 
     if data.empty:
         raise ValueError(
-            "No valid room types and prices available for analysis."
+            "No valid room types and positive prices "
+            "available for analysis."
         )
 
     # Calculate statistics for each room type.
