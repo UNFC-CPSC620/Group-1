@@ -165,7 +165,7 @@ Before running either function, data should be cleaned with `clean_data()` (TASK
 
 **File:** `tests/test_task14_availability_analysis.py`  
 **Runner:** `pytest`  
-**Total tests:** 47 ✅
+**Total tests:** 63 ✅
 
 ### How to Run
 
@@ -196,9 +196,12 @@ python -m pytest tests/ -v
 | 7 | `TestCompareAvailabilityGrouping` | Correct count and mean per borough | 4 |
 | 8 | `TestCompareAvailabilitySorting` | Sorted descending by mean; highest mean is first row | 2 |
 | 9 | `TestCompareAvailabilityTextNormalisation` | Whitespace stripped; case normalised before grouping | 2 |
-| 10 | `TestIntegrationAvailabilityAnalysis` | Load + clean real CSV → run both functions end-to-end | 9 |
-| 11 | `TestDocumentation` | All public functions have docstrings with Parameters and Returns | 6 |
-| | **Total** | | **53** |
+| 10 | `TestAnalyzeOverallAvailabilityInvalidValues` | Values >365 or <0 excluded from stats; boundaries included; all-invalid raises ValueError | 6 |
+| 11 | `TestCompareAvailabilityInvalidValues` | Invalid values excluded from mean; `size()` counts all rows including those with invalid availability | 2 |
+| 12 | `TestDataFrameImmutability` | Neither function modifies the caller's DataFrame | 2 |
+| 13 | `TestIntegrationAvailabilityAnalysis` | Load + clean real CSV → run both functions end-to-end | 9 |
+| 14 | `TestDocumentation` | All public functions have docstrings with Parameters and Returns | 6 |
+| | **Total** | | **63** |
 
 ---
 
@@ -207,7 +210,7 @@ python -m pytest tests/ -v
 ```
 ============================= test session starts ==============================
 platform win32 -- Python 3.x (anaconda3), pytest-x.x.x
-collected 53 items
+collected 63 items
 
 tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInputValidation::test_missing_availability_column_raises PASSED
 tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInputValidation::test_non_dataframe_raises PASSED
@@ -261,9 +264,33 @@ tests/test_task14_availability_analysis.py::TestDocumentation::test_analyze_over
 tests/test_task14_availability_analysis.py::TestDocumentation::test_analyze_overall_availability_docstring_mentions_returns PASSED
 tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_availability_has_docstring PASSED
 tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_availability_docstring_mentions_parameters PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_all_invalid_raises_value_error PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_boundary_value_0_is_included PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_boundary_value_365_is_included PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_negative_value_is_excluded PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_value_above_365_does_not_raise_max PASSED
+tests/test_task14_availability_analysis.py::TestAnalyzeOverallAvailabilityInvalidValues::test_value_above_365_is_excluded_from_stats PASSED
+tests/test_task14_availability_analysis.py::TestCompareAvailabilityInvalidValues::test_total_listings_counts_all_rows_including_invalid PASSED
+tests/test_task14_availability_analysis.py::TestCompareAvailabilityInvalidValues::test_value_above_365_excluded_from_mean PASSED
+tests/test_task14_availability_analysis.py::TestDataFrameImmutability::test_analyze_overall_does_not_modify_original PASSED
+tests/test_task14_availability_analysis.py::TestDataFrameImmutability::test_compare_neighbourhood_does_not_modify_original PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_neighbourhood_has_five_boroughs PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_neighbourhood_mean_in_valid_range PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_neighbourhood_returns_dataframe PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_neighbourhood_sorted_descending PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_neighbourhood_total_listings_sums_to_overall PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_overall_mean_in_valid_range PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_overall_min_max_ordering PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_overall_returns_dict PASSED
+tests/test_task14_availability_analysis.py::TestIntegrationAvailabilityAnalysis::test_overall_total_listings_positive PASSED
+tests/test_task14_availability_analysis.py::TestDocumentation::test_analyze_overall_availability_docstring_mentions_parameters PASSED
+tests/test_task14_availability_analysis.py::TestDocumentation::test_analyze_overall_availability_docstring_mentions_returns PASSED
+tests/test_task14_availability_analysis.py::TestDocumentation::test_analyze_overall_availability_has_docstring PASSED
+tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_availability_docstring_mentions_parameters PASSED
 tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_availability_docstring_mentions_returns PASSED
+tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_availability_has_docstring PASSED
 
-==================== 53 passed in x.xxs ====================
+==================== 63 passed in 3.78s ====================
 ```
 
 ---
@@ -272,12 +299,12 @@ tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_avai
 
 | Criterion | Status |
 |---|---|
-| Availability analysis functionality is tested | ✅ 44 unit tests across both functions |
+| Availability analysis functionality is tested | ✅ 63 unit and integration tests across both functions |
 | Functions return expected outputs | ✅ Return type, structure and values verified |
 | Analysis rules are verified | ✅ Stats, grouping, sorting, normalisation all tested |
 | Functions include clear documentation | ✅ Docstrings verified by `TestDocumentation` |
 | Testing results are recorded | ✅ Full output recorded in this document |
-| The code executes without errors | ✅ 53/53 tests pass |
+| The code executes without errors | ✅ 63/63 tests pass |
 
 ---
 
@@ -285,5 +312,5 @@ tests/test_task14_availability_analysis.py::TestDocumentation::test_compare_avai
 
 | File | Type | Description |
 |---|---|---|
-| `tests/test_task14_availability_analysis.py` | New | 53 unit and integration tests |
+| `tests/test_task14_availability_analysis.py` | New | 63 unit and integration tests |
 | `docs/task14-availability-analysis.md` | New | This documentation file |
