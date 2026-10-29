@@ -23,6 +23,9 @@ def analyze_overall_availability(df):
     statistics for the `availability_365` column — the number of days per
     year a listing is available for booking.
 
+    Only values in the valid range [0, 365] are included in the statistics.
+    The original DataFrame is never modified.
+
     Key metrics computed
     --------------------
     - Mean and median availability (central tendency)
@@ -50,6 +53,14 @@ def analyze_overall_availability(df):
         - fully_available      : count of listings available all 365 days
         - not_available        : count of listings with 0 available days
 
+    Raises
+    ------
+    KeyError
+        If the `availability_365` column is missing from the DataFrame.
+    ValueError
+        If the DataFrame contains no valid availability values after
+        filtering out out-of-range and non-numeric entries.
+
     Examples
     --------
     >>> from src.data_loader import load_data
@@ -58,29 +69,37 @@ def analyze_overall_availability(df):
     >>> print(summary["mean_availability"])
     112.78
     """
+    # Work on a copy so the caller's DataFrame is never modified
+    df = df.copy()
 
-    # Convert to numeric first — pandas may read this column as strings from CSV
-    # errors="coerce" turns any non-numeric value into NaN safely
+    # Convert to numeric — errors="coerce" turns bad values into NaN safely
     df["availability_365"] = pd.to_numeric(df["availability_365"], errors="coerce")
 
-    # Drop NaN values before computing stats to avoid skewed results
-    availability = df["availability_365"].dropna()
+    # Filter to valid range [0, 365] only — values like 999 are data errors
+    availability = df["availability_365"]
+    availability = availability[(availability >= 0) & (availability <= 365)].dropna()
+
+    if availability.empty:
+        raise ValueError(
+            "No valid availability_365 values found after filtering. "
+            "All values were either non-numeric or outside the [0, 365] range."
+        )
 
     # ------------------------------------------------------------------
     # Build the summary dictionary
     # Each value is rounded or cast to keep output clean and readable
     # ------------------------------------------------------------------
     summary = {
-        "total_listings"    : len(df),
-        "mean_availability" : round(availability.mean(), 2),
+        "total_listings"     : len(df),
+        "mean_availability"  : round(availability.mean(), 2),
         "median_availability": round(availability.median(), 2),
-        "min_availability"  : int(availability.min()),
-        "max_availability"  : int(availability.max()),
-        "std_availability"  : round(availability.std(), 2),
+        "min_availability"   : int(availability.min()),
+        "max_availability"   : int(availability.max()),
+        "std_availability"   : round(availability.std(), 2),
         # Count listings that are open every single day of the year
-        "fully_available"   : int((availability == 365).sum()),
+        "fully_available"    : int((availability == 365).sum()),
         # Count listings that are never available (blocked or inactive)
-        "not_available"     : int((availability == 0).sum()),
+        "not_available"      : int((availability == 0).sum()),
     }
 
     # ------------------------------------------------------------------
@@ -113,13 +132,11 @@ if __name__ == "__main__":
     from pathlib import Path
     from data_loader import load_data
 
-    # Build path to the dataset relative to this file's location
     dataset_path = (
         Path(__file__).resolve().parent.parent
         / "data"
         / "Airbnb_NYC.csv"
     )
 
-    # Load the dataset and run the analysis
     airbnb_df = load_data(dataset_path)
     analyze_overall_availability(airbnb_df)
