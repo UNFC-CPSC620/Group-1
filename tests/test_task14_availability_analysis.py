@@ -487,6 +487,63 @@ class TestDataFrameImmutability(unittest.TestCase):
 
 
 # =============================================================================
+# 2c. Regression tests — fractional availability values (Kate PR #39 / #41)
+# =============================================================================
+
+class TestFractionalAvailabilityExclusionOverall(unittest.TestCase):
+    """Fractional availability values must be excluded from overall stats."""
+
+    def test_fractional_value_excluded_from_mean(self):
+        """A value like 125.5 must not affect the mean — only integers count."""
+        df = _make_df(
+            _make_row(id=1, availability_365=100),
+            _make_row(id=2, availability_365=125.5),  # invalid — fractional
+            _make_row(id=3, availability_365=200),
+        )
+        result = analyze_overall_availability(df)
+        # Only 100 and 200 are valid — mean must be 150.0, not 141.83
+        self.assertAlmostEqual(result["mean_availability"], 150.0, places=1)
+
+    def test_fractional_value_excluded_from_max(self):
+        """A fractional max value must not appear in results."""
+        df = _make_df(
+            _make_row(id=1, availability_365=200),
+            _make_row(id=2, availability_365=300.9),  # invalid — fractional
+        )
+        result = analyze_overall_availability(df)
+        self.assertEqual(result["max_availability"], 200)
+
+
+class TestFractionalAvailabilityExclusionNeighbourhood(unittest.TestCase):
+    """Fractional availability values must be excluded from neighbourhood stats."""
+
+    def test_fractional_value_excluded_from_neighbourhood_mean(self):
+        """A value like 125.5 must not affect the borough mean."""
+        df = _make_df(
+            _make_row(id=1, neighbourhood_group="Brooklyn", availability_365=100),
+            _make_row(id=2, neighbourhood_group="Brooklyn", availability_365=125.5),  # invalid
+            _make_row(id=3, neighbourhood_group="Brooklyn", availability_365=200),
+        )
+        result = compare_availability_by_neighbourhood(df)
+        brooklyn = result[result["neighbourhood_group"] == "Brooklyn"]
+        # Only 100 and 200 are valid integers — mean must be 150.0, not 141.83
+        self.assertAlmostEqual(
+            brooklyn["mean_availability"].iloc[0].item(), 150.0, places=1
+        )
+
+    def test_fractional_row_still_counts_in_total_listings(self):
+        """A listing with a fractional availability is still a listing."""
+        df = _make_df(
+            _make_row(id=1, neighbourhood_group="Brooklyn", availability_365=100),
+            _make_row(id=2, neighbourhood_group="Brooklyn", availability_365=125.5),  # invalid avail
+        )
+        result = compare_availability_by_neighbourhood(df)
+        brooklyn = result[result["neighbourhood_group"] == "Brooklyn"]
+        # Both rows are Brooklyn listings — total_listings must be 2
+        self.assertEqual(brooklyn["total_listings"].values[0], 2)
+
+
+# =============================================================================
 # 3. Integration — load real CSV then run both functions
 # =============================================================================
 
