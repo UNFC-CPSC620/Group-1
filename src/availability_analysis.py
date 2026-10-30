@@ -82,9 +82,11 @@ def analyze_overall_availability(df):
     # Filter to valid range [0, 365] only — removes NaN and out-of-range values
     # such as 999, which indicate data quality issues
     availability = data["availability_365"][
-        (data["availability_365"] >= 0) & (data["availability_365"] <= 365)
+        (data["availability_365"] >= 0) &
+        (data["availability_365"] <= 365) &
+        (data["availability_365"] % 1 == 0)
     ]
-
+  
     if availability.empty:
         raise ValueError(
             "No valid availability_365 values found in the dataset."
