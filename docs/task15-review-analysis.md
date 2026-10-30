@@ -93,7 +93,7 @@ Both review columns are converted using:
 pd.to_numeric(errors="coerce")
 ```
 
-Values that cannot be converted become `NaN`.
+Values that cannot be converted become missing numeric values.
 
 ### 3. Valid review counts
 
@@ -114,7 +114,18 @@ For `reviews_per_month`, valid values must:
 
 Missing, negative, non-numeric, and infinite values are excluded.
 
-### 5. Statistical calculations
+### 5. Nullable Pandas values
+
+The validation masks use `.fillna(False)` to ensure missing values represented by `pd.NA` are correctly treated as invalid.
+
+This supports Pandas nullable numeric data types, including:
+
+- `Int64` for nullable integer columns.
+- `Float64` for nullable floating-point columns.
+
+Missing nullable values are excluded from calculations and counted correctly in the corresponding invalid-value totals.
+
+### 6. Statistical calculations
 
 - Total reviews are calculated using valid review counts only.
 - Average reviews per listing uses the number of listings with valid review counts as its denominator.
@@ -131,7 +142,7 @@ Missing, negative, non-numeric, and infinite values are excluded.
 **File:** `tests/test_task15_review_analysis.py`  
 **Module under test:** `src/review_analysis.py`  
 **Runner:** `pytest`  
-**Total tests:** 11
+**Total tests:** 12
 
 ### How to Run
 
@@ -162,6 +173,7 @@ python3 -m pytest -v
 | 9 | Missing columns | Raises `KeyError` when required columns are missing |
 | 10 | Invalid input type | Raises `TypeError` for non-DataFrame input |
 | 11 | Empty DataFrame | Handles empty input without errors |
+| 12 | Nullable Pandas columns | Handles missing `pd.NA` values in nullable `Int64` and `Float64` columns |
 
 ---
 
@@ -170,13 +182,13 @@ python3 -m pytest -v
 The dedicated TASK-15 test suite was executed successfully.
 
 ```text
-11 passed
+12 passed in 0.40s
 ```
 
-The complete project test suite was also executed successfully:
+The complete project test suite was also executed successfully.
 
 ```text
-101 passed, 18 subtests passed
+102 passed, 18 subtests passed in 0.65s
 ```
 
 No test failures were reported in these executions.
@@ -200,7 +212,7 @@ The analysis returned the following results:
 | Invalid review counts | 0 |
 | Invalid monthly reviews | 8,956 |
 
-These results reflect the current dataset and the validation rules implemented in the module.
+These results reflect the dataset used for the analysis and the validation rules implemented in the module.
 
 ---
 
@@ -208,14 +220,15 @@ These results reflect the current dataset and the validation rules implemented i
 
 | Criterion | Status |
 |---|---|
-| Total reviews are calculated correctly | ✅ Implemented and tested |
-| Average reviews per listing are calculated correctly | ✅ Uses valid review listings as denominator |
-| Listings with zero reviews are identified | ✅ Implemented and tested |
-| Average monthly review activity is calculated | ✅ Implemented and tested |
-| Missing or invalid review values are handled | ✅ Implemented and tested |
-| Functions return reusable results | ✅ Returns a structured dictionary |
-| Code includes clear documentation | ✅ Function docstring and this document |
-| Functions execute without errors | ✅ 11 dedicated tests passed |
+| Total reviews are calculated correctly | Implemented and tested |
+| Average reviews per listing are calculated correctly | Uses valid review listings as denominator |
+| Listings with zero reviews are identified | Implemented and tested |
+| Average monthly review activity is calculated | Implemented and tested |
+| Missing or invalid review values are handled | Implemented and tested |
+| Nullable Pandas columns handle missing values correctly | Implemented and tested |
+| Functions return reusable results | Returns a structured dictionary |
+| Code includes clear documentation | Function docstring and this document |
+| Functions execute without errors | 12 dedicated tests passed |
 
 ---
 
@@ -223,8 +236,8 @@ These results reflect the current dataset and the validation rules implemented i
 
 | File | Type | Description |
 |---|---|---|
-| `src/review_analysis.py` | New | Reusable overall Airbnb review analysis function |
-| `tests/test_task15_review_analysis.py` | New | 11 unit tests covering calculations, validation, and edge cases |
+| `src/review_analysis.py` | New | Reusable overall Airbnb review analysis function with nullable-value validation |
+| `tests/test_task15_review_analysis.py` | New | 12 unit tests covering calculations, validation, nullable columns, and edge cases |
 | `docs/task15-review-analysis.md` | New | Implementation, testing, and results documentation |
 
 ---
