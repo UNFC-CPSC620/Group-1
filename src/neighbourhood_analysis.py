@@ -56,7 +56,7 @@ def clean_price_data(df):
     return cleaned.loc[valid].copy()
 
 
-def _prepare_neighbourhood_data(df, columns):
+def _prepare_neighbourhood_data(df, columns, filter_prices=True):
     """
     Prepare and validate neighbourhood data.
 
@@ -71,6 +71,9 @@ def _prepare_neighbourhood_data(df, columns):
         Original Airbnb dataset.
     columns : list
         Required grouping columns.
+    filter_prices : bool, optional
+        If True, exclude invalid prices.
+        If False, retain listings regardless of price.
 
     Returns
     -------
@@ -78,7 +81,10 @@ def _prepare_neighbourhood_data(df, columns):
         Cleaned dataset with standardized group and
         neighbourhood names.
     """
-    cleaned = clean_price_data(df)
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
+
+    cleaned = clean_price_data(df) if filter_prices else df.copy()
 
     missing = [
         column
@@ -260,7 +266,7 @@ def average_prices_by_neighbourhood(df):
 
 def top_neighbourhoods_by_listings(df, top_n=10):
     """
-    Identify neighbourhoods with the most valid-price listings.
+    Identify neighbourhoods with the most listings.
 
     Neighbourhood names are normalized before counting
     so capitalization differences do not split listings.
@@ -303,14 +309,14 @@ def top_neighbourhoods_by_listings(df, top_n=10):
 
     cleaned = _prepare_neighbourhood_data(
         df,
-        columns
+        columns,
+        filter_prices=False
     )
 
-    result = cleaned.groupby(
-        columns,
-        as_index=False
-    ).agg(
-        listing_count=("price", "size")
+    result = (
+        cleaned.groupby(columns, as_index=False)
+        .size()
+        .rename(columns={"size": "listing_count"})
     )
 
     result = result.sort_values(

@@ -70,7 +70,26 @@ class TestNeighbourhoodAnalysis(unittest.TestCase):
             "Chelsea"
         )
         self.assertEqual(
-            result.iloc[0]["listing_count"], 2
+            result.iloc[0]["listing_count"], 3
+        )
+
+    def test_ranking_includes_invalid_prices(self):
+        result = top_neighbourhoods_by_listings(
+            self.df, top_n=10
+        )
+
+        counts = result.set_index(
+            ["neighbourhood_group", "neighbourhood"]
+        )["listing_count"]
+
+        self.assertEqual(
+            counts.loc[("Manhattan", "Chelsea")], 3
+        )
+        self.assertEqual(
+            counts.loc[("Queens", "Astoria")], 1
+        )
+        self.assertEqual(
+            counts.loc[("Bronx", "Fordham")], 1
         )
 
     def test_missing_price_column(self):
