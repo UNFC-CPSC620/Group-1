@@ -77,13 +77,13 @@ def analyze_overall_reviews(df):
         np.isfinite(review_counts)
         & (review_counts >= 0)
         & (review_counts % 1 == 0)
-    )
+    ).fillna(False)
 
     # Valid monthly review activity must be finite and non-negative.
     valid_monthly_reviews = (
         np.isfinite(monthly_reviews)
         & (monthly_reviews >= 0)
-    )
+    ).fillna(False)
 
     # Keep only valid values for calculations.
     valid_counts = review_counts[valid_review_counts]

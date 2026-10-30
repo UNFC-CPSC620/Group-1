@@ -123,3 +123,24 @@ class TestAnalyzeOverallReviews:
         assert result["average_reviews_per_listing"] == 0.0
         assert result["zero_review_listings"] == 0
         assert result["average_reviews_per_month"] == 0.0
+
+    def test_handles_nullable_pandas_columns(self):
+        df = pd.DataFrame({
+            "number_of_reviews": pd.Series(
+                [10, pd.NA, 0, 5], dtype="Int64"
+            ),
+            "reviews_per_month": pd.Series(
+                [2.5, pd.NA, 0.0, 1.5], dtype="Float64"
+            )
+        })
+
+        result = analyze_overall_reviews(df)
+
+        assert result["total_listings"] == 4
+        assert result["total_reviews"] == 15
+        assert result["valid_review_listing_count"] == 3
+        assert result["average_reviews_per_listing"] == 5.0
+        assert result["zero_review_listings"] == 1
+        assert result["average_reviews_per_month"] == 1.33
+        assert result["invalid_review_counts"] == 1
+        assert result["invalid_monthly_reviews"] == 1
