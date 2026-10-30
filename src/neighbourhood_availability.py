@@ -85,10 +85,13 @@ def compare_availability_by_neighbourhood(df):
     # Values like 999 are data errors that would skew the statistics
     # ------------------------------------------------------------------
     df.loc[
-        (df["availability_365"] < 0) | (df["availability_365"] > 365),
+        (df["availability_365"] < 0) |
+        (df["availability_365"] > 365) |
+        (df["availability_365"] % 1 != 0),
         "availability_365"
     ] = pd.NA
-
+    
+    
     # ------------------------------------------------------------------
     # Step 4: Group by neighbourhood and compute stats
     # - mean   : average valid availability across listings in the group
