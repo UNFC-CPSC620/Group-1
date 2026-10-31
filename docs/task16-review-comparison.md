@@ -2,14 +2,13 @@
 
 ## 1. Overview
 
-This task develops reusable Python functions to compare Airbnb review
-activity across different room types and NYC neighbourhood groups.
+This task develops reusable Python functions to compare Airbnb review activity across different room types and NYC neighbourhood groups.
 
 The analysis supports US-05: NYC Airbnb Review Analysis.
 
 ## 2. Implementation
 
-A new module, `src/review_comparison.py`, was created with two functions:
+The module `src/review_comparison.py` contains two functions:
 
 ### 2.1 Compare Reviews by Room Type
 
@@ -21,8 +20,7 @@ Groups Airbnb listings by `room_type` and calculates:
 - Average monthly reviews (`average_reviews_per_month`).
 - Number of listings (`listing_count`).
 
-Room type names are normalized to avoid duplicate categories caused
-by inconsistent capitalization or whitespace.
+Room type names are normalized to avoid duplicate categories caused by inconsistent capitalization or whitespace.
 
 ### 2.2 Compare Reviews by Neighbourhood
 
@@ -42,20 +40,24 @@ Both functions:
 
 - Verify that all required columns are available.
 - Convert review values to numeric format.
-- Handle missing and non-numeric values.
-- Exclude negative and non-finite review values from averages.
+- Exclude missing, non-numeric, negative, and non-finite review values from averages.
+- Require `number_of_reviews` to contain non-negative integer values. Fractional review counts are excluded from the average review calculation.
+- Allow decimal values for `reviews_per_month`, provided they are finite and non-negative.
+- Handle Pandas nullable numeric types, including `Int64` and `Float64`.
 - Exclude listings with missing or blank grouping categories.
 - Work with a copy of the input DataFrame to preserve the original data.
+
+The `listing_count` aggregation represents the number of listings in each valid group, while review averages use valid review values.
 
 Results are returned as reusable Pandas DataFrames.
 
 ## 4. Testing
 
-A dedicated test file was created:
+A dedicated test file is available:
 
 `tests/test_task16_review_comparison.py`
 
-Six unit tests were implemented to verify:
+Nine unit tests verify:
 
 1. Review comparison by room type.
 2. Review comparison by neighbourhood group.
@@ -63,20 +65,23 @@ Six unit tests were implemented to verify:
 4. Handling of invalid review values.
 5. Preservation of the original DataFrame.
 6. Validation of required columns.
+7. Exclusion of fractional review counts by room type.
+8. Exclusion of fractional review counts by neighbourhood.
+9. Handling of Pandas nullable numeric columns (`Int64` and `Float64`).
 
 ### Test Results
 
-- Dedicated TASK-16 tests: 6 passed.
-- Full project test suite: 96 passed.
+- Dedicated TASK-16 tests: 9 passed.
+- Full project test suite: 99 passed.
 - Additional subtests: 18 passed.
 - No test failures.
 
-## 5. Files Created
+## 5. Files
 
 | File | Description |
 |---|---|
 | `src/review_comparison.py` | Reusable review comparison functions. |
-| `tests/test_task16_review_comparison.py` | Six unit tests for TASK-16. |
+| `tests/test_task16_review_comparison.py` | Nine unit tests for TASK-16. |
 | `docs/task16-review-comparison.md` | Implementation and testing documentation. |
 
 ## 6. Acceptance Criteria Status
@@ -89,11 +94,12 @@ Six unit tests were implemented to verify:
 | Average review counts calculated by neighbourhood group | Implemented and tested |
 | Monthly review activity compared correctly | Implemented and tested |
 | Missing and invalid values handled appropriately | Implemented and tested |
+| Fractional review counts excluded from average calculations | Implemented and tested |
+| Nullable Pandas numeric values handled appropriately | Implemented and tested |
 | Results returned as Pandas DataFrames | Implemented and tested |
 | Functions documented and reusable | Implemented |
 | Code executes without errors | Verified |
 
 ## 7. Integration Note
 
-Final integration should be verified after the related review-analysis
-tasks have been reviewed and merged into the main branch.
+Final integration should be verified after the related review-analysis tasks have been reviewed and merged into the main branch.

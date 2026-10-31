@@ -46,14 +46,25 @@ def compare_reviews_by_room_type(df):
         data["reviews_per_month"], errors="coerce"
     )
 
-    data["number_of_reviews"] = data["number_of_reviews"].where(
+    # Keep only finite, non-negative whole-number review counts.
+    valid_review_counts = (
         np.isfinite(data["number_of_reviews"])
         & (data["number_of_reviews"] >= 0)
+        & (data["number_of_reviews"] % 1 == 0)
+    ).fillna(False)
+
+    data["number_of_reviews"] = data["number_of_reviews"].where(
+        valid_review_counts
     )
 
-    data["reviews_per_month"] = data["reviews_per_month"].where(
+    # Monthly review activity can contain valid decimal values.
+    valid_monthly_reviews = (
         np.isfinite(data["reviews_per_month"])
         & (data["reviews_per_month"] >= 0)
+    ).fillna(False)
+
+    data["reviews_per_month"] = data["reviews_per_month"].where(
+        valid_monthly_reviews
     )
 
     data["room_type"] = (
@@ -76,6 +87,7 @@ def compare_reviews_by_room_type(df):
     )
 
     return summary
+
 
 def compare_reviews_by_neighbourhood(df):
     """
@@ -121,14 +133,25 @@ def compare_reviews_by_neighbourhood(df):
         data["reviews_per_month"], errors="coerce"
     )
 
-    data["number_of_reviews"] = data["number_of_reviews"].where(
+    # Keep only finite, non-negative whole-number review counts.
+    valid_review_counts = (
         np.isfinite(data["number_of_reviews"])
         & (data["number_of_reviews"] >= 0)
+        & (data["number_of_reviews"] % 1 == 0)
+    ).fillna(False)
+
+    data["number_of_reviews"] = data["number_of_reviews"].where(
+        valid_review_counts
     )
 
-    data["reviews_per_month"] = data["reviews_per_month"].where(
+    # Monthly review activity can contain valid decimal values.
+    valid_monthly_reviews = (
         np.isfinite(data["reviews_per_month"])
         & (data["reviews_per_month"] >= 0)
+    ).fillna(False)
+
+    data["reviews_per_month"] = data["reviews_per_month"].where(
+        valid_monthly_reviews
     )
 
     data["neighbourhood_group"] = (

@@ -99,6 +99,58 @@ def test_invalid_values_are_ignored():
     assert result.iloc[0]["average_reviews_per_month"] == 2
 
 
+def test_fractional_review_counts_are_excluded_by_room_type():
+    df = pd.DataFrame({
+        "room_type": ["Private room"] * 3,
+        "number_of_reviews": [10, 2.5, 20],
+        "reviews_per_month": [1.0, 2.0, 3.0]
+    })
+
+    result = compare_reviews_by_room_type(df)
+
+    assert result.iloc[0]["average_reviews"] == 15
+    assert result.iloc[0]["average_reviews_per_month"] == 2
+    assert result.iloc[0]["listing_count"] == 3
+
+
+def test_fractional_review_counts_are_excluded_by_neighbourhood():
+    df = pd.DataFrame({
+        "neighbourhood_group": ["Brooklyn"] * 3,
+        "number_of_reviews": [10, 2.5, 20],
+        "reviews_per_month": [1.0, 2.0, 3.0]
+    })
+
+    result = compare_reviews_by_neighbourhood(df)
+
+    assert result.iloc[0]["average_reviews"] == 15
+    assert result.iloc[0]["average_reviews_per_month"] == 2
+    assert result.iloc[0]["listing_count"] == 3
+
+
+def test_nullable_pandas_columns_are_handled():
+    df = pd.DataFrame({
+        "room_type": ["Private room"] * 3,
+        "neighbourhood_group": ["Brooklyn"] * 3,
+        "number_of_reviews": pd.Series(
+            [10, pd.NA, 20], dtype="Int64"
+        ),
+        "reviews_per_month": pd.Series(
+            [1.5, pd.NA, 2.5], dtype="Float64"
+        )
+    })
+
+    room_result = compare_reviews_by_room_type(df)
+    neighbourhood_result = compare_reviews_by_neighbourhood(df)
+
+    assert room_result.iloc[0]["average_reviews"] == 15
+    assert room_result.iloc[0]["average_reviews_per_month"] == 2
+    assert room_result.iloc[0]["listing_count"] == 3
+
+    assert neighbourhood_result.iloc[0]["average_reviews"] == 15
+    assert neighbourhood_result.iloc[0]["average_reviews_per_month"] == 2
+    assert neighbourhood_result.iloc[0]["listing_count"] == 3
+
+
 def test_original_dataframe_is_not_modified(sample_data):
     original = sample_data.copy(deep=True)
 
