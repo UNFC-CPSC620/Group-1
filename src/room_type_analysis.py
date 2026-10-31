@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -49,9 +50,14 @@ def analyze_prices_by_room_type(df):
         .str.lower()
     )
 
-    # Remove empty room types and non-positive prices.
+    # Remove empty room types and invalid prices.
+    # Only positive, finite prices are included in the analysis.
     data = data[data["room_type"] != ""]
-    data = data[data["price"] > 0]
+
+    data = data[
+        (data["price"] > 0)
+        & np.isfinite(data["price"])
+    ]
 
     if data.empty:
         raise ValueError(
