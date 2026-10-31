@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -29,6 +30,31 @@ def sample_reviews():
             ],
             "number_of_reviews": [10, 20, 0, 30, 40],
             "reviews_per_month": [1.0, 2.0, 0.0, 3.0, 4.0],
+        }
+    )
+
+
+@pytest.fixture
+def invalid_reviews():
+    """Create a dataset containing valid and invalid review values."""
+    return pd.DataFrame(
+        {
+            "room_type": [
+                "Private room",
+                "Private room",
+                "Shared room",
+                "Shared room",
+                "Entire home/apt",
+            ],
+            "neighbourhood_group": [
+                "Brooklyn",
+                "Brooklyn",
+                "Queens",
+                "Queens",
+                "Manhattan",
+            ],
+            "number_of_reviews": [10, -5, 20, None, 30],
+            "reviews_per_month": [1.0, -2.0, 2.0, None, 3.0],
         }
     )
 
@@ -75,7 +101,7 @@ def test_neighbourhood_review_summary(sample_reviews):
 
 
 def test_review_totals_are_consistent_across_modules(sample_reviews):
-    """Check that overall and grouped review results are consistent."""
+    """Check consistency across modules when all review values are valid."""
     overall = analyze_overall_reviews(sample_reviews)
     by_room = compare_reviews_by_room_type(sample_reviews)
     by_neighbourhood = compare_reviews_by_neighbourhood(sample_reviews)
@@ -94,7 +120,7 @@ def test_review_totals_are_consistent_across_modules(sample_reviews):
 
 
 def test_invalid_review_values_across_modules():
-    """Check that invalid review values do not break the analysis."""
+    """Verify that invalid values are excluded from grouped averages."""
     df = pd.DataFrame(
         {
             "room_type": [
@@ -119,9 +145,115 @@ def test_invalid_review_values_across_modules():
     assert overall["total_reviews"] == 10
     assert overall["invalid_review_counts"] == 2
     assert overall["invalid_monthly_reviews"] == 2
+    assert overall["valid_review_listing_count"] == 1
 
     assert by_room["listing_count"].sum() == 3
     assert by_neighbourhood["listing_count"].sum() == 3
+
+    private_room = by_room.loc[
+        by_room["room_type"] == "private room"
+    ].iloc[0]
+
+    brooklyn = by_neighbourhood.loc[
+        by_neighbourhood["neighbourhood_group"] == "Brooklyn"
+    ].iloc[0]
+
+    # Invalid review counts must not affect grouped averages.
+    assert private_room["average_reviews"] == pytest.approx(10.0)
+    assert brooklyn["average_reviews"] == pytest.approx(10.0)
+
+    # Invalid monthly review values must also be excluded.
+    assert private_room["average_reviews_per_month"] == pytest.approx(1.0)
+    assert brooklyn["average_reviews_per_month"] == pytest.approx(1.0)
+
+    # Listing counts still include records with invalid review values.
+    assert private_room["listing_count"] == 2
+    assert brooklyn["listing_count"] == 2
+
+    # Groups without valid review counts must have NaN averages.
+    shared_room = by_room.loc[
+        by_room["room_type"] == "shared room"
+    ].iloc[0]
+
+    assert np.isnan(shared_room["average_reviews"])
+    assert np.isnan(shared_room["average_reviews_per_month"])
+
+
+def test_review_totals_with_invalid_data_are_consistent(invalid_reviews):
+    """
+    Verify cross-module consistency when invalid review values exist.
+
+    Grouped averages are calculated using valid review counts only.
+    Listing counts include all records, so they cannot be used
+    directly to reconstruct review totals when invalid data exists.
+    """
+    overall = analyze_overall_reviews(invalid_reviews)
+    by_room = compare_reviews_by_room_type(invalid_reviews)
+    by_neighbourhood = compare_reviews_by_neighbourhood(invalid_reviews)
+
+    # Expected total from valid review counts: 10 + 20 + 30.
+    assert overall["total_reviews"] == 60
+    assert overall["valid_review_listing_count"] == 3
+    assert overall["invalid_review_counts"] == 2
+
+    # All five listings remain represented in grouped summaries.
+    assert by_room["listing_count"].sum() == 5
+    assert by_neighbourhood["listing_count"].sum() == 5
+
+    # Expected averages after excluding invalid review values.
+    expected_room_averages = {
+        "private room": 10.0,
+        "shared room": 20.0,
+        "entire home/apt": 30.0,
+    }
+
+    expected_neighbourhood_averages = {
+        "Brooklyn": 10.0,
+        "Queens": 20.0,
+        "Manhattan": 30.0,
+    }
+
+    for room_type, expected_average in expected_room_averages.items():
+        row = by_room.loc[
+            by_room["room_type"] == room_type
+        ].iloc[0]
+
+        assert row["average_reviews"] == pytest.approx(expected_average)
+
+    for neighbourhood, expected_average in expected_neighbourhood_averages.items():
+        row = by_neighbourhood.loc[
+            by_neighbourhood["neighbourhood_group"] == neighbourhood
+        ].iloc[0]
+
+        assert row["average_reviews"] == pytest.approx(expected_average)
+
+    # Each group contains exactly one valid review count.
+    valid_counts_by_room = {
+        "private room": 1,
+        "shared room": 1,
+        "entire home/apt": 1,
+    }
+
+    valid_counts_by_neighbourhood = {
+        "Brooklyn": 1,
+        "Queens": 1,
+        "Manhattan": 1,
+    }
+
+    room_total = sum(
+        row["average_reviews"]
+        * valid_counts_by_room[row["room_type"]]
+        for _, row in by_room.iterrows()
+    )
+
+    neighbourhood_total = sum(
+        row["average_reviews"]
+        * valid_counts_by_neighbourhood[row["neighbourhood_group"]]
+        for _, row in by_neighbourhood.iterrows()
+    )
+
+    assert room_total == pytest.approx(overall["total_reviews"])
+    assert neighbourhood_total == pytest.approx(overall["total_reviews"])
 
 
 def test_integration_does_not_modify_original_data(sample_reviews):
