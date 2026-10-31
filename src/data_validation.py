@@ -1,9 +1,16 @@
+import numpy as np
 import pandas as pd
 
 
 def validate_data(df):
     """
-    Validate data types and values in the NYC Airbnb dataset.
+    Validate numeric data in the NYC Airbnb dataset.
+
+    This function converts the required columns to numeric values,
+    identifies invalid entries, and prints a validation summary.
+
+    Invalid records are reported but are not removed or corrected.
+    Data cleaning is handled separately by the data_cleaning module.
 
     Parameters
     ----------
@@ -13,8 +20,20 @@ def validate_data(df):
     Returns
     -------
     pandas.DataFrame
-        DataFrame with validated numeric columns.
+        A copy of the input DataFrame with the required numeric
+        columns converted to numeric types. Invalid values remain
+        in the returned DataFrame.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a pandas DataFrame.
+    ValueError
+        If any required column is missing.
     """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input must be a pandas DataFrame.")
+
     df = df.copy()
 
     print("NYC Airbnb Data Validation")
@@ -48,14 +67,24 @@ def validate_data(df):
         )
 
     # 4. Identify invalid values
-    invalid_price = df["price"].isna() | (df["price"] < 0)
+    invalid_price = (
+        df["price"].isna()
+        | ~np.isfinite(df["price"])
+        | (df["price"] <= 0)
+    )
+
     invalid_minimum_nights = (
         df["minimum_nights"].isna()
+        | ~np.isfinite(df["minimum_nights"])
         | (df["minimum_nights"] < 1)
+        | (df["minimum_nights"] % 1 != 0)
     )
+
     invalid_availability = (
         df["availability_365"].isna()
+        | ~np.isfinite(df["availability_365"])
         | ~df["availability_365"].between(0, 365)
+        | (df["availability_365"] % 1 != 0)
     )
 
     print("\nValidation results:")
