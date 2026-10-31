@@ -38,10 +38,11 @@ Neighbourhood group names are normalized for consistent grouping.
 
 Both functions:
 
+- Verify that the input is a Pandas DataFrame. A `TypeError` is raised when the input has an invalid type.
 - Verify that all required columns are available.
 - Convert review values to numeric format.
 - Exclude missing, non-numeric, negative, and non-finite review values from averages.
-- Require `number_of_reviews` to contain non-negative integer values. Fractional review counts are excluded from the average review calculation.
+- Require `number_of_reviews` to contain non-negative integer values. Fractional review counts are excluded from average review calculations.
 - Allow decimal values for `reviews_per_month`, provided they are finite and non-negative.
 - Handle Pandas nullable numeric types, including `Int64` and `Float64`.
 - Exclude listings with missing or blank grouping categories.
@@ -57,22 +58,24 @@ A dedicated test file is available:
 
 `tests/test_task16_review_comparison.py`
 
-Nine unit tests verify:
+Eleven unit tests verify:
 
 1. Review comparison by room type.
 2. Review comparison by neighbourhood group.
 3. Handling of missing values.
 4. Handling of invalid review values.
-5. Preservation of the original DataFrame.
-6. Validation of required columns.
-7. Exclusion of fractional review counts by room type.
-8. Exclusion of fractional review counts by neighbourhood.
-9. Handling of Pandas nullable numeric columns (`Int64` and `Float64`).
+5. Exclusion of fractional review counts by room type.
+6. Exclusion of fractional review counts by neighbourhood.
+7. Handling of Pandas nullable numeric columns (`Int64` and `Float64`).
+8. Preservation of the original DataFrame.
+9. Validation of required columns.
+10. Rejection of non-DataFrame inputs for room-type comparison.
+11. Rejection of non-DataFrame inputs for neighbourhood comparison.
 
 ### Test Results
 
-- Dedicated TASK-16 tests: 9 passed.
-- Full project test suite: 99 passed.
+- Dedicated TASK-16 tests: 11 passed.
+- Full project test suite: 101 passed.
 - Additional subtests: 18 passed.
 - No test failures.
 
@@ -81,7 +84,7 @@ Nine unit tests verify:
 | File | Description |
 |---|---|
 | `src/review_comparison.py` | Reusable review comparison functions. |
-| `tests/test_task16_review_comparison.py` | Nine unit tests for TASK-16. |
+| `tests/test_task16_review_comparison.py` | Eleven unit tests for TASK-16. |
 | `docs/task16-review-comparison.md` | Implementation and testing documentation. |
 
 ## 6. Acceptance Criteria Status
@@ -96,7 +99,9 @@ Nine unit tests verify:
 | Missing and invalid values handled appropriately | Implemented and tested |
 | Fractional review counts excluded from average calculations | Implemented and tested |
 | Nullable Pandas numeric values handled appropriately | Implemented and tested |
+| Non-DataFrame inputs rejected with TypeError | Implemented and tested |
 | Results returned as Pandas DataFrames | Implemented and tested |
+| Original DataFrame remains unchanged | Implemented and tested |
 | Functions documented and reusable | Implemented |
 | Code executes without errors | Verified |
 

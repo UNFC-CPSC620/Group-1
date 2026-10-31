@@ -171,3 +171,19 @@ def test_missing_required_columns_raise_error():
 
     with pytest.raises(ValueError, match="Missing required columns"):
         compare_reviews_by_neighbourhood(df)
+
+
+def test_room_type_rejects_non_dataframe_input():
+    with pytest.raises(
+        TypeError,
+        match="Input must be a pandas DataFrame"
+    ):
+        compare_reviews_by_room_type(["Private room", "Entire home"])
+
+
+def test_neighbourhood_rejects_non_dataframe_input():
+    with pytest.raises(
+        TypeError,
+        match="Input must be a pandas DataFrame"
+    ):
+        compare_reviews_by_neighbourhood("Brooklyn")
