@@ -288,8 +288,6 @@ Run with `pytest tests/test_task08_price_analysis.py -v`.
 | Skipped | 0     |
 | Failed  | 0     |
 
-All 55 tests pass. This includes `test_inf_price_excluded_from_average` and
+All 55 tests pass, including `test_inf_price_excluded_from_average` and
 `test_inf_price_excluded_from_listing_count`, which verify that infinite prices
-are excluded from room type statistics. These tests pass because the TASK-07
-fix (`np.isfinite()` guard in `src/room_type_analysis.py`) has been merged
-into `main` and incorporated into this branch.
+are excluded from room type statistics.
