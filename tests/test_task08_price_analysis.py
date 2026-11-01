@@ -407,49 +407,23 @@ class TestAnalyzePricesByRoomTypeInvalidPrices(unittest.TestCase):
         self.assertEqual(row["listing_count"].values[0], 1)
 
     def test_inf_price_excluded_from_average(self):
-        """A listing with price inf must not affect the group average.
-
-        NOTE: This test is skipped automatically if analyze_prices_by_room_type()
-        does not yet filter infinite prices. Infinite-price filtering belongs to
-        the room type analysis implementation (TASK-07) and is outside TASK-08
-        scope. The test will pass once that fix is applied to the source.
-        """
+        """A listing with price inf must not affect the group average."""
         df = _make_df(
             _make_row(id=1, room_type="Private room", price=100),
             _make_row(id=2, room_type="Private room", price=np.inf),  # invalid
         )
         result = analyze_prices_by_room_type(df)
         row = result[result["room_type"] == "private room"]
-        avg = row["average_price"].values[0]
-        if not np.isfinite(avg):
-            self.skipTest(
-                "analyze_prices_by_room_type() does not filter inf prices — "
-                "fix belongs to the room type analysis implementation, "
-                "outside TASK-08 scope."
-            )
-        self.assertAlmostEqual(avg, 100.0, places=1)
+        self.assertAlmostEqual(row["average_price"].values[0], 100.0, places=1)
 
     def test_inf_price_excluded_from_listing_count(self):
-        """A listing with price inf must not be counted in listing_count.
-
-        NOTE: This test is skipped automatically if analyze_prices_by_room_type()
-        does not yet filter infinite prices. Infinite-price filtering belongs to
-        the room type analysis implementation (TASK-07) and is outside TASK-08
-        scope. The test will pass once that fix is applied to the source.
-        """
+        """A listing with price inf must not be counted in listing_count."""
         df = _make_df(
             _make_row(id=1, room_type="Shared room", price=50),
             _make_row(id=2, room_type="Shared room", price=np.inf),  # invalid
         )
         result = analyze_prices_by_room_type(df)
         row = result[result["room_type"] == "shared room"]
-        avg = row["average_price"].values[0]
-        if not np.isfinite(avg):
-            self.skipTest(
-                "analyze_prices_by_room_type() does not filter inf prices — "
-                "fix belongs to the room type analysis implementation, "
-                "outside TASK-08 scope."
-            )
         self.assertEqual(row["listing_count"].values[0], 1)
 
 
