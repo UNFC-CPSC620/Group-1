@@ -76,13 +76,15 @@ print(f"Valid listings: {summary['valid_price_count']:,}")
 **Sample output**
 
 ```
-NYC Airbnb Price Summary
-----------------------------------------
-average_price: 152.72
-median_price: 105.0
-minimum_price: 10.0
-maximum_price: 10000.0
-valid_price_count: 47543
+=======================================================
+  STEP 4 — PRICE SUMMARY
+=======================================================
+
+  Average price   :     $153.86
+  Median price    :     $107.00
+  Minimum price   :      $10.00
+  Maximum price   :  $10,128.00
+  Valid listings  :      41,496
 ```
 
 ---
@@ -132,13 +134,17 @@ print(result.to_string(index=False))
 **Sample output**
 
 ```
-NYC Airbnb Price Analysis by Room Type
-------------------------------------------------------------
-        room_type  average_price  median_price  listing_count
-  entire home/apt         211.79         149.0          25396
-     private room          89.78          70.0          22326
-      shared room          70.13          45.0            587
+=======================================================
+  STEP 5 — PRICES BY ROOM TYPE
+=======================================================
+
+         room_type  average_price  median_price  listing_count
+0  entire home/apt     212.815566         160.0          21585
+1     private room      90.939412          70.0          18931
+2      shared room      70.779592          45.0            980
 ```
+
+> Note: `21,585 + 18,931 + 980 = 41,496` — matches `valid_price_count` exactly, confirming both functions operate on the same cleaned dataset.
 
 ---
 
@@ -146,7 +152,7 @@ NYC Airbnb Price Analysis by Room Type
 
 **File:** `tests/test_task08_price_analysis.py`  
 **Runner:** `pytest`  
-**Total tests:** 48 ✅
+**Total tests:** 55 ✅
 
 ### How to Run
 
@@ -177,10 +183,10 @@ python -m pytest tests/ -v
 | 7 | `TestAnalyzePricesByRoomTypeGrouping` | Correct count and mean per room type | 4 |
 | 8 | `TestAnalyzePricesByRoomTypeSorting` | Sorted alphabetically by room type | 1 |
 | 9 | `TestAnalyzePricesByRoomTypeTextNormalisation` | Whitespace stripped; case normalised before grouping | 2 |
-| 10 | `TestAnalyzePricesByRoomTypeInvalidPrices` | Zero and negative prices excluded from group stats | 2 |
+| 10 | `TestAnalyzePricesByRoomTypeInvalidPrices` | Zero, negative, and infinite prices excluded from group stats | 4 |
 | 11 | `TestIntegrationPriceAnalysis` | Load + clean real CSV → run both functions end-to-end | 9 |
 | 12 | `TestDocumentation` | All public functions have docstrings with Parameters and Returns | 6 |
-| | **Total** | | **53** |
+| | **Total** | | **55** |
 
 ---
 
@@ -189,7 +195,7 @@ python -m pytest tests/ -v
 ```
 ============================= test session starts ==============================
 platform win32 -- Python 3.13.5, pytest-8.3.4
-collected 53 items
+collected 55 items
 
 tests/test_task08_price_analysis.py::TestCalculatePriceSummaryInputValidation::test_missing_price_column_raises PASSED
 tests/test_task08_price_analysis.py::TestCalculatePriceSummaryInputValidation::test_all_zero_prices_raises PASSED
@@ -229,6 +235,8 @@ tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeTextNormalisatio
 tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeTextNormalisation::test_case_normalised PASSED
 tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeInvalidPrices::test_zero_price_excluded_from_average PASSED
 tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeInvalidPrices::test_negative_price_excluded PASSED
+tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeInvalidPrices::test_inf_price_excluded_from_average PASSED
+tests/test_task08_price_analysis.py::TestAnalyzePricesByRoomTypeInvalidPrices::test_inf_price_excluded_from_listing_count PASSED
 tests/test_task08_price_analysis.py::TestIntegrationPriceAnalysis::test_summary_returns_dict PASSED
 tests/test_task08_price_analysis.py::TestIntegrationPriceAnalysis::test_summary_valid_price_count_positive PASSED
 tests/test_task08_price_analysis.py::TestIntegrationPriceAnalysis::test_summary_average_price_positive PASSED
@@ -245,7 +253,7 @@ tests/test_task08_price_analysis.py::TestDocumentation::test_analyze_prices_by_r
 tests/test_task08_price_analysis.py::TestDocumentation::test_analyze_prices_by_room_type_docstring_mentions_parameters PASSED
 tests/test_task08_price_analysis.py::TestDocumentation::test_analyze_prices_by_room_type_docstring_mentions_returns PASSED
 
-==================== 53 passed in x.xxs ====================
+==================== 55 passed in x.xxs ====================
 ```
 
 ---
@@ -254,12 +262,12 @@ tests/test_task08_price_analysis.py::TestDocumentation::test_analyze_prices_by_r
 
 | Criterion | Status |
 |---|---|
-| Price analysis functionality is tested | ✅ 53 unit and integration tests across both functions |
+| Price analysis functionality is tested | ✅ 55 unit and integration tests across both functions |
 | Functions return expected outputs | ✅ Return type, structure and values verified |
 | Analysis rules are verified | ✅ Stats, grouping, sorting, normalisation all tested |
 | Functions include clear documentation | ✅ Docstrings verified by `TestDocumentation` |
 | Testing results are recorded | ✅ Full output recorded in this document |
-| The code executes without errors | ✅ 53/53 tests pass |
+| The code executes without errors | ✅ 55/55 tests pass |
 
 ---
 
@@ -267,9 +275,8 @@ tests/test_task08_price_analysis.py::TestDocumentation::test_analyze_prices_by_r
 
 | File | Type | Description |
 |---|---|---|
-| `tests/test_task08_price_analysis.py` | New | 53 unit and integration tests |
+| `tests/test_task08_price_analysis.py` | New | 55 unit and integration tests |
 | `docs/task08-price-analysis.md` | New | This documentation file |
-
 
 ## Test Execution Results
 
@@ -277,13 +284,12 @@ Run with `pytest tests/test_task08_price_analysis.py -v`.
 
 | Result  | Count |
 |---------|-------|
-| Passed  | 53    |
-| Skipped | 2     |
+| Passed  | 55    |
+| Skipped | 0     |
 | Failed  | 0     |
 
-The 2 skipped tests (`test_inf_price_excluded_from_average`,
-`test_inf_price_excluded_from_listing_count`) detect at runtime that
-`analyze_prices_by_room_type()` does not yet filter `np.inf` prices.
-This gap belongs to the room type analysis implementation (TASK-07)
-and is outside TASK-08 scope. The tests will pass automatically once
-that fix is applied.
+All 55 tests pass. This includes `test_inf_price_excluded_from_average` and
+`test_inf_price_excluded_from_listing_count`, which verify that infinite prices
+are excluded from room type statistics. These tests pass because the TASK-07
+fix (`np.isfinite()` guard in `src/room_type_analysis.py`) has been merged
+into `main` and incorporated into this branch.
